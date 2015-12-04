@@ -1,12 +1,12 @@
 (function () {
-	"use strict";
-	
-	var app = angular
-		.module("productResourceMock",
-			["ngMockE2E"]);
+    "use strict";
 
-	app.run(function ($httpBackend) {
-		var products = [
+    var app = angular
+                .module("productResourceMock",
+                        ["ngMockE2E"]);
+
+    app.run(function ($httpBackend) {
+        var products = [
             {
                 "productId": 1,
                 "productName": "Leaf Rake",
@@ -69,9 +69,28 @@
             }
         ];
 
-        var productUrl = "/api/products";
+        var productUrl = "/api/products"
 
-        var editingRegex = new RegExp(productUrl + "/[0-9][0-9]*", '')
+        $httpBackend.whenGET(productUrl).respond(products);
+
+        var editingRegex = new RegExp(productUrl + "/[0-9][0-9]*", '');
+        $httpBackend.whenGET(editingRegex).respond(function (method, url, data) {
+            var product = {"productId": 0};
+            var parameters = url.split('/');
+            var length = parameters.length;
+            var id = parameters[length - 1];
+
+            if (id > 0) {
+                for (var i = 0; i < products.length; i++) {
+                    if (products[i].productId == id) {
+                        product = products[i];
+                        break;
+                    }
+                };
+            }
+            return [200, product, {}];
+        });
+
         $httpBackend.whenPOST(productUrl).respond(function (method, url, data) {
             var product = angular.fromJson(data);
 
@@ -89,10 +108,9 @@
             }
             return [200, product, {}];
         });
-
+        
         $httpBackend.whenGET(/app/).passThrough();
 
 
-	});
-	
+    })
 }());
